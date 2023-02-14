@@ -1,0 +1,74 @@
+Result - 1
+
+select ww.webtoon_name,pc.alias, pc.contract_platform, pc.manuscript_Fee, pc.contract_start_date, pc.contract_end_date,
+TIMESTAMPDIFF(YEAR, pc.contract_start_date,pc.contract_end_date) As 'contract_Term(년)' 
+from webtoon_writer ww
+inner join platform_contract pc
+ON pc.alias = ww.writer
+where ww.webtoon_name in (select ww.webtoon_name
+from serialization s, webtoon w, webtoon_writer ww
+where ww.webtoon_name =w.webtoon_name
+and w.genre = '액션' and s.day_of_the_week = '수요일'
+and s.webtoon_name = w.webtoon_name
+)
+order by pc.manuscript_Fee DESC, pc.contract_start_date asc ;
+
+Result - 2
+select m.id, m.age,  count(m.id) as 작품수 
+from member m
+inner join interest_enrollment ie
+on m.id = ie.id
+where ie.webtoon_name in (select w.webtoon_name
+from webtoon w
+where w.age_use = '18세이상')
+group by m.id
+ORDER BY count(m.id) desc, m.age desc;
+
+회원별 나이에 맞게 관심 등록 확인(17세는 18세 이상 웹툰 등록 X)
+select m.id, m.age, ie.webtoon_name,webtoon.age_use
+from member m
+inner join interest_enrollment ie
+on m.id = ie.id
+inner join webtoon
+on ie.webtoon_name = webtoon.webtoon_name;
+
+
+Result - 3
+select distinct webtoon.genre, max(webtoon.grade) as genre_grade_ranking
+from webtoon
+inner join lookup
+on webtoon.webtoon_name = lookup.webtoon_name 
+where webtoon.webtoon_name in (
+select lookup.webtoon_name
+from member, lookup
+where member.age between 20 and 30 and member.id = lookup.id)
+group by webtoon.genre 
+order by max(webtoon.grade) desc;
+
+조회에서 각 장르별 평점 목록 
+SELECT lookup.id , webtoon.webtoon_name, webtoon.genre ,webtoon.grade
+FROM webtoon.lookup
+inner join webtoon
+on lookup.webtoon_name = webtoon.webtoon_name
+order by webtoon.genre desc, webtoon.grade desc;
+
+
+Result - 4
+select ww.writer, count(pc.alias) as views,
+pc.one_views_price, count(ww.writer) * one_Views_price as Total_Views_Price
+from lookup l
+inner join webtoon_writer ww
+on l.webtoon_name = ww.webtoon_name
+inner join platform_contract pc
+on ww.writer = pc.alias
+group by ww.writer
+ORDER BY count(pc.alias) * one_Views_price desc;
+
+작가에 따른 조회 작품 확인
+SELECT webtoon_writer.webtoon_name, webtoon_writer.writer
+FROM lookup
+inner join webtoon_writer
+on lookup.webtoon_name = webtoon_writer.webtoon_name;
+
+
+
